@@ -19,6 +19,7 @@
                  [digest "1.4.6"]
                  [org.clojars.akiel/digest "0.1"]]
   :main nezapp.core
+  :min-lein-version "2.0.0"
   :target-path "target/%s"
   :uberjar-name "nezapp.jar"
   :profiles {:uberjar {:aot :all}})
