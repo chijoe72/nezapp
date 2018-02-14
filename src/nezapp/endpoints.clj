@@ -86,7 +86,7 @@
    ; Get Professions
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
    {
-    :uri      "retrieve/profession"
+    :uri      "retrieve/professions"
     :auth     nil
     :method   :get
     :function (fn [payload]
