@@ -4,8 +4,8 @@
   {:user-id user-id :username username :password password :user-type user-type}
   )
 
-(defn user-info [name surname email cellphone street-number street-name suburb]
-  {:name name :surname surname :email email :cellphone cellphone :street-number street-number :street-name street-name :suburb suburb}
+(defn user-info [name surname address mobile-contact email-contact]
+  {:name name :surname surname :address address :mobile-contact mobile-contact :email-contact email-contact}
   )
 
 (defn address [user-id street-number street-name suburb]

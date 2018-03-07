@@ -23,20 +23,16 @@
     )
   )
 
-(defn insert-user-info [user-id name surname address mobile email]
+(defn insert-user-info [user-id user-info]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
-        user (get-user-by-id user-id)
         users-reference (m/get-in root [:users user-id])
         address-reference (m/get-in root :addresses)
         contact-reference (m/get-in root :contacts)]
-    (if (= user :user-not-found)
-      {:status 403 :response {:message "Contact not found"}}
-      (do
-        (m/merge! users-reference  {:name name :surname surname})
-        (m/conj! address-reference address)
-        (m/conj! contact-reference mobile)
-        (m/conj! contact-reference email)
-        )
+    (do
+      (m/reset! users-reference  {:name (:name user-info) :surname (:surname user-info)})
+      (m/conj! address-reference (:address user-info))
+      (m/conj! contact-reference (:mobile-contact user-info) )
+      (m/conj! contact-reference (:email-contact user-info))
       )
     )
   )
