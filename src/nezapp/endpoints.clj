@@ -75,25 +75,24 @@
     :method   :post
     :function (fn [payload]
                 (let [uuid (.toString (UUID/randomUUID))]
-                  (orchestrator/insert-user-info uuid
-                                                 (model/user-info (:body.name payload)
-                                                                  (:body.surname payload)
-                                                                  (model/address uuid
-                                                                                 (:body.street-number payload)
-                                                                                 (:body.street-name payload)
-                                                                                 (:body.suburb payload))
-                                                                  (model/contact
-                                                                    uuid
-                                                                    (:body.cellphone payload)
-                                                                    :mobile-number
-                                                                    )
-                                                                  (model/contact
-                                                                    uuid
-                                                                    (:body.email payload)
-                                                                    :email))))
-                (do
-
-                  {:status 200 :response {:response "SUCCESS" :uuid uuid}}))
+                  (do
+                    (orchestrator/insert-user-info uuid
+                                                   (model/user-info (:body.name payload)
+                                                                    (:body.surname payload)
+                                                                    (model/address uuid
+                                                                                   (:body.street-number payload)
+                                                                                   (:body.street-name payload)
+                                                                                   (:body.suburb payload))
+                                                                    (model/contact
+                                                                      uuid
+                                                                      (:body.cellphone payload)
+                                                                      :mobile-number
+                                                                      )
+                                                                    (model/contact
+                                                                      uuid
+                                                                      (:body.email payload)
+                                                                      :email)))
+                    {:status 200 :response {:response "SUCCESS" :uuid uuid}})))
     }
 
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
