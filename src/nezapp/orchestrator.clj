@@ -16,6 +16,32 @@
     )
   )
 
+(defn get-address-by-userid [user-id]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        address-reference (m/get-in root :addresses)
+        address (async/<!! (ma/deref<
+                          (m/equal-to (m/order-by-child address-reference :user-id) user-id)
+                          ))]
+    (if (empty? address)
+      :user-not-found
+      (first address)
+      )
+    )
+  )
+
+(defn get-contact-by-userid [user-id]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        contact-reference (m/get-in root :contacts)
+        contact (async/<!! (ma/deref<
+                             (m/equal-to (m/order-by-child contact-reference :user-id) user-id)
+                             ))]
+    (if (empty? contact)
+      :user-not-found
+      contact
+      )
+    )
+  )
+
 (defn insert-user-login-credentials [user-id user]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         users-reference (m/get-in root :users)]
@@ -36,6 +62,31 @@
       )
     )
   )
+
+(defn update-address [id address]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        address-reference (m/get-in root [:addresses id])]
+        (m/merge! address-reference address)))
+
+(defn update-contact [id contact]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        contact-reference (m/get-in root [:contacts id])]
+    (m/merge! contact-reference contact)))
+
+
+(defn update-user-info [user-id user-info]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        users-reference (m/get-in root [:users user-id])]
+    (do
+      (m/merge! users-reference  {:name (:name user-info) :surname (:surname user-info)})
+      (update-address (subs (str (key (get-address-by-userid user-id)))1) (:address user-info))
+      (let [contact  (get-contact-by-userid user-id)]
+        (mapv (fn [m]
+                (when (= (:contact-type (val m)) :email)
+                  (update-contact (subs (str (key m))1) (:email-contact user-info)))
+                (when (= (:contact-type (val m)) :mobile-number)
+                  (update-contact (subs (str (key m))1) (:mobile-contact user-info))))
+              contact)))))
 
 (defn insert-profession [profession]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")

@@ -9,7 +9,7 @@
   )
 
 (defn address [user-id street-number street-name suburb]
-  {:user-id user-id :street-number street-number :street-name street-name :suburb suburb}
+  {:user-id user-id :street-number street-number :street-name street-name :suburb suburb :city "Cape Town"}
   )
 
 (defn contact [user-id contact contat-type]
