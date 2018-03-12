@@ -7,5 +7,5 @@
 
 (defn -main
   []
-  (rest/innit 1738 ep/endpoints)
+  (rest/innit (env :port) ep/endpoints)
   )
