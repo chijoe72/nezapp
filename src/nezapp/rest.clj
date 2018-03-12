@@ -61,10 +61,10 @@
 (defn test-url [compare in]
   "test if two urls match"
   (if (= (count compare) (count in))
-    (= (count (remove nil? (mapv (fn [com nn]
+    (zero? (count (remove nil? (mapv (fn [com nn]
                                    (if (false? (str/includes? nn "{"))
                                      (if (false? (= com nn))
-                                       false))) compare in))) 0)))
+                                       false))) compare in))))))
 
 (defn identify-url [{:keys [uri] :as request} routes]
   "finds route given the request and route list"
@@ -114,9 +114,7 @@
 
 
       (if (:status processed-response)
-        (let [headers (if (:headers processed-response)
-                        (:headers processed-response)
-                        headers)]
+        (let [headers (or (:headers processed-response) headers)]
 
           {:status (:status processed-response) :headers headers :body (if (or (map? (:response processed-response)) (vector? (:response processed-response)))
                                                                          (json/write-str (:response processed-response))
