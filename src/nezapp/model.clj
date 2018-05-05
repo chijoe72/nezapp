@@ -19,3 +19,13 @@
 (defn profession [profession-id name]
   {:profession-id profession-id :name name}
   )
+
+(defn professionalprofession [profession-id user-id]
+  {:profession-id profession-id :user-id user-id}
+  )
+
+;work-photos
+
+(defn professional [user-id]
+  {:user-id user-id}
+  )

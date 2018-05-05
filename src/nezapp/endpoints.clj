@@ -96,6 +96,22 @@
     }
 
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   ; Save Professional Profession
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+
+   {
+    :uri      "save/professional-profession"
+    :auth     nil
+    :method   :post
+    :function (fn [payload]
+                (let [uuid (.toString (UUID/randomUUID))]
+                  (do
+                    (orchestrator/insert-professional-profession (model/professionalprofession (:body.profession-id payload)
+                                                                                               (:body.user-id payload)))
+                    {:status 200 :response {:response "SUCCESS" :uuid uuid}})))
+    }
+
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
    ; Edit user
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -152,6 +168,23 @@
     :method   :get
     :function (fn [payload]
                 (let [professions (orchestrator/get-profession)]
+                  (if (= professions :professions-not-found)
+                    {:status 404 :response {:message "Professions not found"}}
+                    {:status 200 :response {:response professions}}
+                    )
+                  )
+                )
+    }
+
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   ; Get Professionals
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   {
+    :uri      "/professional"
+    :auth     nil
+    :method   :get
+    :function (fn [payload]
+                (let [professions (orchestrator/get-professional)]
                   (if (= professions :professions-not-found)
                     {:status 404 :response {:message "Professions not found"}}
                     {:status 200 :response {:response professions}}
