@@ -104,11 +104,9 @@
     :auth     nil
     :method   :post
     :function (fn [payload]
-                (let [uuid (.toString (UUID/randomUUID))]
-                  (do
-                    (orchestrator/insert-professional-profession (model/professionalprofession (:body.profession-id payload)
-                                                                                               (:body.user-id payload)))
-                    {:status 200 :response {:response "SUCCESS" :uuid uuid}})))
+                (do
+                  (orchestrator/save-professional-profession (:body.professions payload))
+                  {:status 200 :response {:response "SUCCESS"}}))
     }
 
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------

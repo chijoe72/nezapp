@@ -102,6 +102,10 @@
         professional-profession-reference (m/get-in root :professional-profession)]
     (m/conj! professional-profession-reference professional-profession)))
 
+(defn save-professional-profession [professions]
+  (mapv (fn [profession]
+         (insert-professional-profession {:profession-id (get profession "profession-id") :user-id (get profession "user-id")})) professions))
+
 (defn insert-professional [professional]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         professionals-reference (m/get-in root :professionals)]
