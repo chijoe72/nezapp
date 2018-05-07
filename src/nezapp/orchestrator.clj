@@ -108,10 +108,10 @@
     (m/conj! professionals-reference professional)))
 
 (defn save-professional-profession [professions]
-  (mapv (fn [profession]
-          (do
-            (insert-professional-profession {:profession-id (get profession "profession-id") :user-id (get profession "user-id")})
-            (insert-professional {:user-id (get profession "user-id")}))) professions))
+  (do
+    (insert-professional {:user-id (get (first professions) "user-id")})
+    (mapv (fn [profession]
+            (insert-professional-profession {:profession-id (get profession "profession-id") :user-id (get profession "user-id")})) professions)))
 
 (defn update-address [id address]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
