@@ -22,15 +22,15 @@
       :user-not-found
       (first address))))
 
-(defn get-address-by-userid-2 [user-id]
+(defn get-profile-photo-by-userid [user-id]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
-        address-reference (m/get-in root :addresses)
-        address (async/<!! (ma/deref-list<
-                             (m/equal-to (m/order-by-child address-reference :user-id) user-id)
-                             ))]
-    (if (empty? address)
+        profile-photo-reference (m/get-in root :profilephoto)
+        profile-photo (async/<!! (ma/deref-list<
+                                   (m/equal-to (m/order-by-child profile-photo-reference :uuid) user-id)
+                                   ))]
+    (if (empty? profile-photo)
       :user-not-found
-      address)))
+      profile-photo)))
 
 (defn get-contact-by-userid [user-id]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
@@ -54,9 +54,9 @@
 
 (defn get-work-photos-by-userid [user-id]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
-        work-photos-reference (m/get-in root :images)
+        work-photos-reference (m/get-in root :workphotos)
         work-photos (async/<!! (ma/deref-list<
-                                 (m/equal-to (m/order-by-child work-photos-reference :user-id) user-id)
+                                 (m/equal-to (m/order-by-child work-photos-reference :uuid) user-id)
                                  ))]
     (if (empty? work-photos)
       :work-photos-not-found
@@ -102,14 +102,16 @@
         professional-profession-reference (m/get-in root :professional-profession)]
     (m/conj! professional-profession-reference professional-profession)))
 
-(defn save-professional-profession [professions]
-  (mapv (fn [profession]
-         (insert-professional-profession {:profession-id (get profession "profession-id") :user-id (get profession "user-id")})) professions))
-
 (defn insert-professional [professional]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         professionals-reference (m/get-in root :professionals)]
     (m/conj! professionals-reference professional)))
+
+(defn save-professional-profession [professions]
+  (mapv (fn [profession]
+          (do
+            (insert-professional-profession {:profession-id (get profession "profession-id") :user-id (get profession "user-id")})
+            (insert-professional {:user-id (get profession "user-id")}))) professions))
 
 (defn update-address [id address]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
@@ -152,7 +154,7 @@
 
 (defn get-professionals []
   (let [professionals (get-professional)]
-    (if (empty? professionals)
+    (if (= :professional-not-found professionals)
       :professionals-not-found
       (mapv (fn [professional]
               (let [user-id (:user-id professional)
@@ -163,10 +165,14 @@
                     email (let [email-contact (first (filter #(= (:contact-type %) :email) contact))]
                             (if (nil? email-contact) nil (:contact email-contact)))
                     address (get-address-by-userid user-id)
-                    ;work-photos (get-work-photos-by-userid user-id)
+                    profile-photo (first (get-profile-photo-by-userid user-id))
+                    work-photos (let [images (get-work-photos-by-userid user-id)]
+                                  (mapv (fn [image]
+                                          (:name image))
+                                        images))
                     professional-profession (get-professional-profession-by-user-id user-id)
                     professions (mapv (fn [m]
-                                        (let [profession (get-profession-by-profession-id (:profesion-id m))]
+                                        (let [profession (get-profession-by-profession-id (:profession-id m))]
                                           (:name profession)))
                                       professional-profession)
                     professional-response (atom {
@@ -179,7 +185,11 @@
                                                  :professions   professions})]
                 (do
                   (if (not (nil? mobile-number))
-                    (swap! professional-response #(conj % {:mobile-numnber mobile-number})))
+                    (swap! professional-response #(conj % {:mobile-number mobile-number})))
                   (if (not (nil? email))
-                    (swap! professional-response #(conj % {:email email}))))))
+                    (swap! professional-response #(conj % {:email email})))
+                  (if (not (nil? work-photos))
+                    (swap! professional-response #(conj % {:work-photos work-photos})))
+                  (if (not (nil? profile-photo))
+                    (swap! professional-response #(conj % {:profile-photo (:name profile-photo)}))))))
             professionals))))

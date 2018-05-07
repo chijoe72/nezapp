@@ -178,11 +178,11 @@
    ; Get Professionals
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
    {
-    :uri      "/professional"
+    :uri      "professional"
     :auth     nil
     :method   :get
     :function (fn [payload]
-                (let [professions (orchestrator/get-professional)]
+                (let [professions (orchestrator/get-professionals)]
                   (if (= professions :professions-not-found)
                     {:status 404 :response {:message "Professions not found"}}
                     {:status 200 :response {:response professions}}
