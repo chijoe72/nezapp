@@ -110,6 +110,26 @@
     }
 
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   ; Send Quote
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+
+   {
+    :uri      "quote"
+    :auth     nil
+    :method   :post
+    :function (fn [payload]
+                (do
+                  (orchestrator/send-quote (model/quote
+                                             (:body.send-date payload)
+                                             (:body.subject payload)
+                                             (:body.message payload)
+                                             (:body.sender-uuid payload)
+                                             (:body.receiver-uuid payload)))
+                  {:status 200 :response {:response "SUCCESS"}}))
+    }
+
+
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
    ; Edit user
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -189,6 +209,50 @@
                     )
                   )
                 )
+    }
+
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   ; Get User by UUID
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   {
+    :uri      "user/{uuid}"
+    :auth     nil
+    :method   :get
+    :function (fn [payload]
+                (let [user (orchestrator/get-user-details (:path.uuid payload))]
+                  (if (= user :user-not-found)
+                    {:status 404 :response {:message "User not found"}}
+                    {:status 200 :response {:response user}})))
+    }
+
+
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   ; Get Sender Quote by UUID
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   {
+    :uri      "quote/sender/{uuid}"
+    :auth     nil
+    :method   :get
+    :function (fn [payload]
+                (let [sender-quote (orchestrator/get-sender-quote (:path.uuid payload))]
+                  (if (= sender-quote :sender-quote-not-found)
+                    {:status 404 :response {:message "Sender quote not found"}}
+                    {:status 200 :response {:response sender-quote}})))
+    }
+
+
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   ; Get Receiver Quote by UUID
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   {
+    :uri      "quote/receiver/{uuid}"
+    :auth     nil
+    :method   :get
+    :function (fn [payload]
+                (let [receiver-quote (orchestrator/get-receiver-quote (:path.uuid payload))]
+                  (if (= receiver-quote :sender-quote-not-found)
+                    {:status 404 :response {:message "Receiver quote not found"}}
+                    {:status 200 :response {:response receiver-quote}})))
     }
 
    ]

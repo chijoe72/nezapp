@@ -62,6 +62,24 @@
       :work-photos-not-found
       work-photos)))
 
+(defn get-sender-quote-by-userid [user-id]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        quotes-reference (m/get-in root :quotes)
+        sender-quote (async/<!! (ma/deref-list<
+                                 (m/equal-to (m/order-by-child quotes-reference :sender-uuid) user-id)))]
+    (if (empty? sender-quote)
+      :sender-quote-not-found
+      sender-quote)))
+
+(defn get-receiver-quote-by-userid [user-id]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        quotes-reference (m/get-in root :quotes)
+        receiver-quote (async/<!! (ma/deref-list<
+                                  (m/equal-to (m/order-by-child quotes-reference :receiver-uuid) user-id)))]
+    (if (empty? receiver-quote)
+      :receiver-quote-not-found
+      receiver-quote)))
+
 (defn get-profession-by-profession-id [profession-id]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         profession-reference (m/get-in root :professions)
@@ -106,6 +124,11 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         professionals-reference (m/get-in root :professionals)]
     (m/conj! professionals-reference professional)))
+
+(defn insert-quote [quote]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        quotes-reference (m/get-in root :quotes)]
+    (m/conj! quotes-reference quote)))
 
 (defn save-professional-profession [professions]
   (do
@@ -152,44 +175,94 @@
       :professions-not-found
       professions)))
 
+(defn get-basic-user-details [user-id]
+  (let [user (get-user-by-id user-id)]
+    (if (empty? user)
+      :user-not-found
+      (let [contact (get-contact-by-userid user-id)
+            mobile-number (let [mobile-contact (first (filter #(= (:contact-type %) :mobile-number) contact))]
+                            (if (nil? mobile-contact) nil (:contact mobile-contact)))
+            email (let [email-contact (first (filter #(= (:contact-type %) :email) contact))]
+                    (if (nil? email-contact) nil (:contact email-contact)))
+            address (get-address-by-userid user-id)
+            user-response (atom {
+                                         :uuid          user-id
+                                         :name          (:name user)
+                                         :surname       (:surname user)
+                                         :street-name   (:street-name address)
+                                         :street-number (:street-number address)
+                                         :suburb        (:suburb address)
+                                         :city          (:city address)})]
+        (do
+          (if (not (nil? mobile-number))
+            (swap! user-response #(conj % {:mobile-number mobile-number})))
+          (if (not (nil? email))
+            (swap! user-response #(conj % {:email email}))))))))
+
+(defn get-user-details [user-id]
+  (let [user (get-user-by-id user-id)]
+    (if (empty? user)
+      :user-not-found
+      (let [contact (get-contact-by-userid user-id)
+            mobile-number (let [mobile-contact (first (filter #(= (:contact-type %) :mobile-number) contact))]
+                            (if (nil? mobile-contact) nil (:contact mobile-contact)))
+            email (let [email-contact (first (filter #(= (:contact-type %) :email) contact))]
+                    (if (nil? email-contact) nil (:contact email-contact)))
+            address (get-address-by-userid user-id)
+            profile-photo (first (get-profile-photo-by-userid user-id))
+            work-photos (let [images (get-work-photos-by-userid user-id)]
+                          (mapv (fn [image]
+                                  (:name image))
+                                images))
+            professional-profession (get-professional-profession-by-user-id user-id)
+            professions (mapv (fn [m]
+                                (let [profession (get-profession-by-profession-id (:profession-id m))]
+                                  (:name profession)))
+                              professional-profession)
+            professional-response (atom {
+                                         :uuid          user-id
+                                         :name          (:name user)
+                                         :surname       (:surname user)
+                                         :street-name   (:street-name address)
+                                         :street-number (:street-number address)
+                                         :suburb        (:suburb address)
+                                         :city          (:city address)
+                                         :professions   professions})]
+        (do
+          (if (not (nil? mobile-number))
+            (swap! professional-response #(conj % {:mobile-number mobile-number})))
+          (if (not (nil? email))
+            (swap! professional-response #(conj % {:email email})))
+          (if (not (nil? work-photos))
+            (swap! professional-response #(conj % {:work-photos work-photos})))
+          (if (not (nil? profile-photo))
+            (swap! professional-response #(conj % {:profile-photo (:name profile-photo)}))))))))
+
 (defn get-professionals []
   (let [professionals (get-professional)]
     (if (= :professional-not-found professionals)
       :professionals-not-found
       (mapv (fn [professional]
-              (let [user-id (:user-id professional)
-                    user (get-user-by-id user-id)
-                    contact (get-contact-by-userid user-id)
-                    mobile-number (let [mobile-contact (first (filter #(= (:contact-type %) :mobile-number) contact))]
-                                    (if (nil? mobile-contact) nil (:contact mobile-contact)))
-                    email (let [email-contact (first (filter #(= (:contact-type %) :email) contact))]
-                            (if (nil? email-contact) nil (:contact email-contact)))
-                    address (get-address-by-userid user-id)
-                    profile-photo (first (get-profile-photo-by-userid user-id))
-                    work-photos (let [images (get-work-photos-by-userid user-id)]
-                                  (mapv (fn [image]
-                                          (:name image))
-                                        images))
-                    professional-profession (get-professional-profession-by-user-id user-id)
-                    professions (mapv (fn [m]
-                                        (let [profession (get-profession-by-profession-id (:profession-id m))]
-                                          (:name profession)))
-                                      professional-profession)
-                    professional-response (atom {
-                                                 :name          (:name user)
-                                                 :surname       (:surname user)
-                                                 :street-name   (:street-name address)
-                                                 :street-number (:street-number address)
-                                                 :suburb        (:suburb address)
-                                                 :city          (:city address)
-                                                 :professions   professions})]
-                (do
-                  (if (not (nil? mobile-number))
-                    (swap! professional-response #(conj % {:mobile-number mobile-number})))
-                  (if (not (nil? email))
-                    (swap! professional-response #(conj % {:email email})))
-                  (if (not (nil? work-photos))
-                    (swap! professional-response #(conj % {:work-photos work-photos})))
-                  (if (not (nil? profile-photo))
-                    (swap! professional-response #(conj % {:profile-photo (:name profile-photo)}))))))
+              (get-user-details (:user-id professional)))
             professionals))))
+
+(defn send-quote [quote]
+  (insert-quote quote))
+
+(defn get-sender-quote [user-uid]
+  (let [sender-quote (get-sender-quote-by-userid user-uid)]
+    (if (= :sender-quote-not-found sender-quote)
+      :sender-quote-not-found
+      (let [quote {:send-date (:send-date sender-quote)
+                   :subject (:subject sender-quote)
+                   :message (:message sender-quote)}]
+        (merg quote (get-basic-user-details user-uid))))))
+
+(defn get-receiver-quote [user-uid]
+  (let [receiver-quote (get-receiver-quote-by-userid user-uid)]
+    (if (= :receiver-quote-not-found receiver-quote)
+      :receiver-quote-not-found
+      (let [quote {:send-date (:send-date receiver-quote)
+                   :subject (:subject receiver-quote)
+                   :message (:message receiver-quote)}]
+        (merg quote (get-basic-user-details user-uid))))))
