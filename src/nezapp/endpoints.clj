@@ -119,12 +119,7 @@
     :method   :post
     :function (fn [payload]
                 (do
-                  (orchestrator/send-quote (model/quote
-                                             (:body.send-date payload)
-                                             (:body.subject payload)
-                                             (:body.message payload)
-                                             (:body.sender-uuid payload)
-                                             (:body.receiver-uuid payload)))
+                  (orchestrator/send-quote (:body.quotes payload))
                   {:status 200 :response {:response "SUCCESS"}}))
     }
 

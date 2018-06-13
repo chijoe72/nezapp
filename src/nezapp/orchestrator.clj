@@ -1,7 +1,8 @@
 (ns nezapp.orchestrator
   (:require [matchbox.core :as m]
             [matchbox.async :as ma]
-            [clojure.core.async :as async]))
+            [clojure.core.async :as async]
+            [nezapp.model :as model]))
 
 (defn get-user-by-id [user-id]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
@@ -66,7 +67,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         quotes-reference (m/get-in root :quotes)
         sender-quote (async/<!! (ma/deref-list<
-                                 (m/equal-to (m/order-by-child quotes-reference :sender-uuid) user-id)))]
+                                  (m/equal-to (m/order-by-child quotes-reference :sender-uuid) user-id)))]
     (if (empty? sender-quote)
       :sender-quote-not-found
       sender-quote)))
@@ -75,7 +76,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         quotes-reference (m/get-in root :quotes)
         receiver-quote (async/<!! (ma/deref-list<
-                                  (m/equal-to (m/order-by-child quotes-reference :receiver-uuid) user-id)))]
+                                    (m/equal-to (m/order-by-child quotes-reference :receiver-uuid) user-id)))]
     (if (empty? receiver-quote)
       :receiver-quote-not-found
       receiver-quote)))
@@ -186,13 +187,13 @@
                     (if (nil? email-contact) nil (:contact email-contact)))
             address (get-address-by-userid user-id)
             user-response (atom {
-                                         :uuid          user-id
-                                         :name          (:name user)
-                                         :surname       (:surname user)
-                                         :street-name   (:street-name address)
-                                         :street-number (:street-number address)
-                                         :suburb        (:suburb address)
-                                         :city          (:city address)})]
+                                 :uuid          user-id
+                                 :name          (:name user)
+                                 :surname       (:surname user)
+                                 :street-name   (:street-name address)
+                                 :street-number (:street-number address)
+                                 :suburb        (:suburb address)
+                                 :city          (:city address)})]
         (do
           (if (not (nil? mobile-number))
             (swap! user-response #(conj % {:mobile-number mobile-number})))
@@ -246,23 +247,32 @@
               (get-user-details (:user-id professional)))
             professionals))))
 
-(defn send-quote [quote]
-  (insert-quote quote))
+(defn send-quote [quotes]
+  (mapv (fn [quote]
+          (insert-quote (model/quote
+                          (get quote "send-date")
+                          (get quote "subject")
+                          (get quote "message")
+                          (get quote "sender-uuid")
+                          (get quote "receiver-uuid"))))
+        quotes))
 
 (defn get-sender-quote [user-uid]
-  (let [sender-quote (get-sender-quote-by-userid user-uid)]
-    (if (= :sender-quote-not-found sender-quote)
+  (let [sender-quotes (get-sender-quote-by-userid user-uid)]
+    (if (= :sender-quote-not-found sender-quotes)
       :sender-quote-not-found
-      (let [quote {:send-date (:send-date sender-quote)
-                   :subject (:subject sender-quote)
-                   :message (:message sender-quote)}]
-        (merg quote (get-basic-user-details user-uid))))))
+      (mapv (fn [sender-quote]
+              {:send-date (:send-date sender-quote)
+               :subject   (:subject sender-quote)
+               :message   (:message sender-quote)})
+            sender-quotes))))
 
 (defn get-receiver-quote [user-uid]
-  (let [receiver-quote (get-receiver-quote-by-userid user-uid)]
-    (if (= :receiver-quote-not-found receiver-quote)
+  (let [receiver-quotes (get-receiver-quote-by-userid user-uid)]
+    (if (= :receiver-quote-not-found receiver-quotes)
       :receiver-quote-not-found
-      (let [quote {:send-date (:send-date receiver-quote)
-                   :subject (:subject receiver-quote)
-                   :message (:message receiver-quote)}]
-        (merg quote (get-basic-user-details user-uid))))))
+      (mapv (fn [receiver-quote]
+              {:send-date (:send-date receiver-quote)
+               :subject   (:subject receiver-quote)
+               :message   (:message receiver-quote)})
+            receiver-quotes))))
