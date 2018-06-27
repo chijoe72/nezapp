@@ -23,7 +23,7 @@
                                                                   (:body.username payload)
                                                                   (digest/md5 (:body.password payload))
                                                                   (:body.user-type payload)
-                                                                  )) )
+                                                                  )))
 
                   {:status 200 :response {:response "SUCCESS"}}))
     }
@@ -54,6 +54,22 @@
                                                                              (:body.email payload)
                                                                              :email)))
                   {:status 200 :response {:response "SUCCESS"}}))
+    }
+
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   ; Login
+   ;-----------------------------------------------------------------------------------------------------------------------------------------------------
+   {
+    :uri      "login"
+    :auth     nil
+    :method   :post
+    :function (fn [payload]
+                (let [login-response (orchestrator/login (:body.name payload)
+                                                         (:body.surname payload)
+                                                         (:body.cellphone payload))]
+                  (if (= login-response :user-not-found)
+                    {:status 404 :response {:message "User not found"}}
+                    {:status 200 :response {:response "SUCCESS"}})))
     }
 
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------

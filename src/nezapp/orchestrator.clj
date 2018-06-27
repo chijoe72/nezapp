@@ -17,8 +17,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         address-reference (m/get-in root :addresses)
         address (async/<!! (ma/deref-list<
-                             (m/equal-to (m/order-by-child address-reference :user-id) user-id)
-                             ))]
+                             (m/equal-to (m/order-by-child address-reference :user-id) user-id)))]
     (if (empty? address)
       :user-not-found
       (first address))))
@@ -27,8 +26,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         profile-photo-reference (m/get-in root :profilephoto)
         profile-photo (async/<!! (ma/deref-list<
-                                   (m/equal-to (m/order-by-child profile-photo-reference :uuid) user-id)
-                                   ))]
+                                   (m/equal-to (m/order-by-child profile-photo-reference :uuid) user-id)))]
     (if (empty? profile-photo)
       :user-not-found
       profile-photo)))
@@ -37,8 +35,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         contact-reference (m/get-in root :contacts)
         contact (async/<!! (ma/deref-list<
-                             (m/equal-to (m/order-by-child contact-reference :user-id) user-id)
-                             ))]
+                             (m/equal-to (m/order-by-child contact-reference :user-id) user-id)))]
     (if (empty? contact)
       :user-not-found
       contact)))
@@ -47,8 +44,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         professional-reference (m/get-in root :professionals)
         professional (async/<!! (ma/deref-list<
-                                  professional-reference
-                                  ))]
+                                  professional-reference))]
     (if (empty? professional)
       :professional-not-found
       professional)))
@@ -57,8 +53,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         work-photos-reference (m/get-in root :workphotos)
         work-photos (async/<!! (ma/deref-list<
-                                 (m/equal-to (m/order-by-child work-photos-reference :uuid) user-id)
-                                 ))]
+                                 (m/equal-to (m/order-by-child work-photos-reference :uuid) user-id)))]
     (if (empty? work-photos)
       :work-photos-not-found
       work-photos)))
@@ -85,8 +80,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         profession-reference (m/get-in root :professions)
         profession (async/<!! (ma/deref-list<
-                                (m/equal-to (m/order-by-child profession-reference :profession-id) profession-id)
-                                ))]
+                                (m/equal-to (m/order-by-child profession-reference :profession-id) profession-id)))]
     (if (empty? profession)
       :profesion-not-found
       (first profession))))
@@ -95,8 +89,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         professional-profession-reference (m/get-in root :professional-profession)
         professional-profession (async/<!! (ma/deref-list<
-                                             (m/equal-to (m/order-by-child professional-profession-reference :user-id) user-id)
-                                             ))]
+                                             (m/equal-to (m/order-by-child professional-profession-reference :user-id) user-id)))]
     (if (empty? professional-profession)
       :profesional-profession-not-found
       professional-profession)))
@@ -170,8 +163,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         profession-reference (m/get-in root :professions)
         professions (async/<!! (ma/deref-list<
-                                 profession-reference
-                                 ))]
+                                 profession-reference))]
     (if (empty? professions)
       :professions-not-found
       professions)))
@@ -276,3 +268,19 @@
                :subject   (:subject receiver-quote)
                :message   (:message receiver-quote)})
             receiver-quotes))))
+
+
+(defn login [name surname mobile-number]
+  (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
+        users-reference (m/get-in root :users)
+        contact-reference (m/get-in root :contacts)
+        user (async/<!! (ma/deref-list<
+                          (m/equal-to (m/order-by-child users-reference :name) (clojure.string/lower-case name))))
+        contact (async/<!! (ma/deref-list<
+                             (m/equal-to (m/order-by-child contact-reference :contact) mobile-number)))]
+    (if (empty? user)
+      :user-not-found
+      (let [filtered-user (first (filter #(= (clojure.string/lower-case (:surname %)) (clojure.string/lower-case surname)) user))]
+        (if (and (not (empty? contact)) (not (empty? filtered-user)))
+          :success
+          :user-not-found)))))
