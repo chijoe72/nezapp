@@ -2,7 +2,8 @@
   (:require [matchbox.core :as m]
             [matchbox.async :as ma]
             [clojure.core.async :as async]
-            [nezapp.model :as model]))
+            [nezapp.model :as model]
+            [nezapp.util :as util]))
 
 (defn get-user-by-id [user-id]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
@@ -273,14 +274,16 @@
 (defn login [name surname mobile-number]
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         users-reference (m/get-in root :users)
-        contact-reference (m/get-in root :contacts)
-        user (async/<!! (ma/deref-list<
-                          (m/equal-to (m/order-by-child users-reference :name) (clojure.string/lower-case name))))
-        contact (async/<!! (ma/deref-list<
-                             (m/equal-to (m/order-by-child contact-reference :contact) mobile-number)))]
-    (if (empty? user)
+        users (async/<!! (ma/deref<
+                          (m/equal-to (m/order-by-child users-reference :name) (clojure.string/lower-case name))))]
+    (if (empty? users)
       :user-not-found
-      (let [filtered-user (first (filter #(= (clojure.string/lower-case (:surname %)) (clojure.string/lower-case surname)) user))]
-        (if (and (not (empty? contact)) (not (empty? filtered-user)))
-          :success
-          :user-not-found)))))
+      (let [filtered-user (first (filter #(= (clojure.string/lower-case (:surname %)) (clojure.string/lower-case surname)) (vals users)))]
+        (if (nil? filtered-user)
+          :user-not-found
+          (let [user-id (subs (str (util/get-key-from-value users filtered-user)) 1)
+                contacts (get-contact-by-userid user-id)
+                filtered-contact (first (filter #(= (:contact %) mobile-number) contacts))]
+            (if (and (not (empty? filtered-contact)) (not (empty? filtered-user)))
+              (get-basic-user-details user-id)
+              :user-not-found)))))))
