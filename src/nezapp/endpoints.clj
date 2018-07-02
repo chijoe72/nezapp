@@ -69,7 +69,7 @@
                                                          (:body.cellphone payload))]
                   (if (= login-response :user-not-found)
                     {:status 404 :response {:message "User not found"}}
-                    {:status 200 :response (merge {:response "SUCCESS"} login-response)})))
+                    {:status 200 :response login-response})))
     }
 
    ;-----------------------------------------------------------------------------------------------------------------------------------------------------
