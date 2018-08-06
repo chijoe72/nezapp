@@ -63,7 +63,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         quotes-reference (m/get-in root :quotes)
         sender-quote (async/<!! (ma/deref-list<
-                                  (m/equal-to (m/order-by-child quotes-reference :sender-uuid) user-id)))]
+                                  (m/equal-to (m/order-by-child quotes-reference :senderUuid) user-id)))]
     (if (empty? sender-quote)
       :sender-quote-not-found
       sender-quote)))
@@ -72,7 +72,7 @@
   (let [root (m/connect "https://nezapp-a4eb4.firebaseio.com")
         quotes-reference (m/get-in root :quotes)
         receiver-quote (async/<!! (ma/deref-list<
-                                    (m/equal-to (m/order-by-child quotes-reference :receiver-uuid) user-id)))]
+                                    (m/equal-to (m/order-by-child quotes-reference :receiverUuid) user-id)))]
     (if (empty? receiver-quote)
       :receiver-quote-not-found
       receiver-quote)))
@@ -257,7 +257,8 @@
       (mapv (fn [sender-quote]
               {:send-date (:send-date sender-quote)
                :subject   (:subject sender-quote)
-               :message   (:message sender-quote)})
+               :message   (:message sender-quote)
+               :receiver-details (get-basic-user-details (:receiverUuid sender-quote))})
             sender-quotes))))
 
 (defn get-receiver-quote [user-uid]
@@ -267,7 +268,8 @@
       (mapv (fn [receiver-quote]
               {:send-date (:send-date receiver-quote)
                :subject   (:subject receiver-quote)
-               :message   (:message receiver-quote)})
+               :message   (:message receiver-quote)
+               :sender-details (get-basic-user-details (:senderUuid receiver-quote))})
             receiver-quotes))))
 
 
