@@ -174,6 +174,7 @@
     (if (empty? user)
       :user-not-found
       (let [contact (get-contact-by-userid user-id)
+            profile-photo (first (get-profile-photo-by-userid user-id))
             mobile-number (let [mobile-contact (first (filter #(= (:contact-type %) :mobile-number) contact))]
                             (if (nil? mobile-contact) nil (:contact mobile-contact)))
             email (let [email-contact (first (filter #(= (:contact-type %) :email) contact))]
@@ -191,7 +192,9 @@
           (if (not (nil? mobile-number))
             (swap! user-response #(conj % {:mobile-number mobile-number})))
           (if (not (nil? email))
-            (swap! user-response #(conj % {:email email}))))))))
+            (swap! user-response #(conj % {:email email})))
+          (if (not (nil? profile-photo))
+            (swap! user-response #(conj % {:profile-photo (:name profile-photo)}))))))))
 
 (defn get-user-details [user-id]
   (let [user (get-user-by-id user-id)]
